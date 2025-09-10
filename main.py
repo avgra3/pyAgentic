@@ -1,13 +1,23 @@
 import os
 from dotenv import load_dotenv
 from google import genai
+import sys
+
+
+class NotEnoughArgs(Exception):
+    def __init__(self, message: str, error_code):
+        super().__init__(message)
+        self.error_code = error_code
 
 
 def main():
     load_dotenv()
     api_key = os.environ.get("GEMINI_API_KEY")
     client = genai.Client(api_key=api_key)
-    base_prompt = "Why is Boot.dev such a great place to learn backend development? Use one paragraph maximum."
+    if len(sys.argv) > 1:
+        base_prompt = " ".join(sys.argv[1:])
+    else:
+        raise NotEnoughArgs(message="No provided prompt.", error_code=1)
     generated_content = client.models.generate_content(
         model="gemini-2.0-flash-001", contents=base_prompt
     )
