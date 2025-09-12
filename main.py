@@ -1,7 +1,9 @@
 import os
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 import sys
+import argparse
 
 
 class NotEnoughArgs(Exception):
@@ -10,21 +12,34 @@ class NotEnoughArgs(Exception):
         self.error_code = error_code
 
 
+def run_ai(input: str, api_key: str, verbose: bool):
+    client = genai.Client(api_key=api_key)
+    if input is None:
+        raise NotEnoughArgs(message="No provided prompt.", error_code=1)
+    messages = [types.Content(role="user", parts=[types.Part(text=input)])]
+    generated_content = client.models.generate_content(
+        model="gemini-2.0-flash-001",
+        contents=messages,
+    )
+    meta_data = generated_content.usage_metadata
+    if verbose:
+        print(f"User prompt: {input}")
+        print(f"Prompt tokens: {meta_data.prompt_token_count}")
+        print(f"Response tokens: {meta_data.candidates_token_count}")
+    print(generated_content.text)
+
+
 def main():
     load_dotenv()
     api_key = os.environ.get("GEMINI_API_KEY")
-    client = genai.Client(api_key=api_key)
-    if len(sys.argv) > 1:
-        base_prompt = " ".join(sys.argv[1:])
-    else:
-        raise NotEnoughArgs(message="No provided prompt.", error_code=1)
-    generated_content = client.models.generate_content(
-        model="gemini-2.0-flash-001", contents=base_prompt
+    parser = argparse.ArgumentParser(
+        prog="pyAgentic",
+        description="AI agent written in Python",
     )
-    meta_data = generated_content.usage_metadata
-    print(generated_content.text)
-    print(f"Prompt tokens: {meta_data.prompt_token_count}")
-    print(f"Response tokens: {meta_data.candidates_token_count}")
+    parser.add_argument("input")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    args = parser.parse_args()
+    run_ai(input=args.input, api_key=api_key, verbose=args.verbose)
 
 
 if __name__ == "__main__":
