@@ -11,3 +11,6 @@ wheels/
 
 # Env files
 .env
+
+# Test created files
+*lorem.txt
