@@ -12,7 +12,7 @@ class NotEnoughArgs(Exception):
         self.error_code = error_code
 
 
-def run_ai(input: str, api_key: str, verbose: bool):
+def run_ai(input: str, api_key: str, verbose: bool, system_prompt: str):
     client = genai.Client(api_key=api_key)
     if input is None:
         raise NotEnoughArgs(message="No provided prompt.", error_code=1)
@@ -20,6 +20,7 @@ def run_ai(input: str, api_key: str, verbose: bool):
     generated_content = client.models.generate_content(
         model="gemini-2.0-flash-001",
         contents=messages,
+        config=types.GenerateContentConfig(system_instruction=system_prompt),
     )
     meta_data = generated_content.usage_metadata
     if verbose:
@@ -32,6 +33,7 @@ def run_ai(input: str, api_key: str, verbose: bool):
 def main():
     load_dotenv()
     api_key = os.environ.get("GEMINI_API_KEY")
+    system_prompt = os.environ.get("SYSTEM_PROMPT")
     parser = argparse.ArgumentParser(
         prog="pyAgentic",
         description="AI agent written in Python",
@@ -39,7 +41,12 @@ def main():
     parser.add_argument("input")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
-    run_ai(input=args.input, api_key=api_key, verbose=args.verbose)
+    run_ai(
+        input=args.input,
+        api_key=api_key,
+        verbose=args.verbose,
+        system_prompt=system_prompt,
+    )
 
 
 if __name__ == "__main__":
