@@ -13,7 +13,6 @@ def run_python_file(working_directory, file_path, args=[]):
         return f'Error: File "{file_path}" not found.'
     if not path_to_check.as_posix().endswith(".py"):
         return f'Error: "{file_path}" is not a Python file.'
-    # subprocess.run(args, *, stdin=None, input=None, stdout=None, stderr=None, capture_output=False, shell=False, cwd=None, timeout=None, check=False, encoding=None, errors=None, text=None, env=None, universal_newlines=None, **other_popen_kwargs)
     err = ""
     try:
         output = run(

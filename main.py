@@ -4,6 +4,8 @@ from google import genai
 from google.genai import types
 import sys
 import argparse
+from functions.get_files_info import available_functions
+from functions.call_function import call_function
 
 
 class NotEnoughArgs(Exception):
@@ -20,14 +22,30 @@ def run_ai(input: str, api_key: str, verbose: bool, system_prompt: str):
     generated_content = client.models.generate_content(
         model="gemini-2.0-flash-001",
         contents=messages,
-        config=types.GenerateContentConfig(system_instruction=system_prompt),
+        config=types.GenerateContentConfig(
+            tools=[available_functions], system_instruction=system_prompt
+        ),
     )
     meta_data = generated_content.usage_metadata
     if verbose:
         print(f"User prompt: {input}")
         print(f"Prompt tokens: {meta_data.prompt_token_count}")
         print(f"Response tokens: {meta_data.candidates_token_count}")
-    print(generated_content.text)
+    # print(generated_content.text)
+    function_calls = generated_content.function_calls
+    if len(function_calls) > 0:
+        for function_call_part in function_calls:
+            print(
+                f"Calling function: {function_call_part.name}({function_call_part.args})"
+            )
+            result = call_function(
+                function_call_part=function_call_part, verbose=verbose
+            )
+            response = result.parts[0].function_response.response
+            if response is None:
+                sys.exit("Error: No function response")
+            if verbose:
+                print(f"-> {response}")
 
 
 def main():
